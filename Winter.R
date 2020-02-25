@@ -4,9 +4,8 @@ library(data.table) # required
 library(hdf5r)
 library(lhs)
 
-state_names <- c('NoBC', 'mild.b', 'mild.r', 'mild.t', 'prog.b', 'prog.r', 'prog.t', 'sev.b', 'sev.r', 'sev.t',
-                 'scr.detected', 'detected')
-
+state_names <- c('NoBC', 'mild.b', 'mild.r', 'mild.t', 'prog.b', 'prog.r', 'prog.t', 
+                 'scr.detected', 'cln.detected')
 
 # create a HDF5
 winter_h5 <- H5File$new("Winter.h5", mode = "w")
@@ -22,13 +21,12 @@ source("initialise_hfd5.R")
 source('load_data.R')
 source('mcmc.R')
 
-
 object_creator <- create_objects(state_names)
 
-#Create a list of values for the transition matrix
+#Create an empty list of values for the transition matrix
 baseline_arglist <- object_creator$create_argument_list()
-baseline_arglist$load_list('baseline_tmatrix')
-
+baseline_arglist$load_list('baseline_tmatrix') # load an existing transition matrix
+# baseline_arglist$edit_list()
 
 #Create the transition matrix
 baseline_matrix <- do.call(object_creator$define_transition, baseline_arglist$list_values())
@@ -38,8 +36,8 @@ state_list <- object_creator$create_states(state_names, a=x, b=y, c=z)
 
 # Initialise 
 cur_I <- NULL
-cur_BC <- NULL
-cur_RC <- NULL
+cur_CB <- NULL
+cur_CR <- NULL
 cur_EB <- NULL
 cur_ER <- NULL
 cur_ET <- NULL
@@ -49,20 +47,18 @@ cur_KT <- NULL
 cur_SN <- NULL
 cur_SP <- NULL
 cur_POS <- NULL
-cur_PPC = NULL
+cur_PPC <- NULL
 
-flow_cost <- rep(1,12)
-state_cost <- rep(10, 12)
-utility <- rep(1, 12)
-
-
-
+# Place holder values
+flow_cost <- rep(1,9)
+state_cost <- rep(10, 9)
+utility <- rep(1, 9)
 
 # Creates an unevaluated set of parameters
 parameters <- object_creator$define_parameters(I = get_I(cur_I),
-                                              BC = get_BC(cur_BC),
-                                              RC = get_RC(cur_RC,BC),
-                                              TC = (1 - BC - RC),
+                                              CB = get_CB(cur_CB),
+                                              CR = get_CR(cur_CR,CB),
+                                              CT = (1 - CB - CR),
                                               EB = get_EB(cur_EB),
                                               ER = get_ER(cur_ER),
                                               ET = get_ET(cur_ET),
@@ -71,16 +67,14 @@ parameters <- object_creator$define_parameters(I = get_I(cur_I),
                                               KT = get_KT(cur_KT),
                                               SN = get_testsn(cur_SN),
                                               SP = get_testsp(cur_SP),
-                                              POS = get_POS(cur_POS),
-                                              PPC = get_PPC(cur_PPC)
+                                              SW = .1
                                               )
-# POS - probability of screening
-# PPC - probability of presenting clinically
+
 
 
 # Create and initialise inputs
-winter_input_dt <- ind1_participation[, (state_names) := 0]
-winter_input_dt[ , NoBC := calculated_mean]
+winter_input_dt <- ind1_population[, (state_names) := 0]
+winter_input_dt[ , NoBC := calculated_population]
 
 
 # TODO - deparse the name of the arguments using (...) and create the property label. Test, treatment or xyz shouldn't
@@ -88,8 +82,11 @@ winter_input_dt[ , NoBC := calculated_mean]
 
 baseline_strategy <- object_creator$define_strategy(test = test,
                                                     my_name = "baseline",
+                                                    cycles = 10,
+                                                    start_year = 2008,
                                                     states = state_list,
                                                     transition_matrix = baseline_matrix,
+                                                    parameters = parameters,
                                                     dsa = NULL,
                                                     mcmc = 'mcmc'
                                                     )
@@ -101,16 +98,25 @@ baseline_strategy <- object_creator$define_strategy(test = test,
 class(baseline_strategy)
 
 start_year <- 2008
-init <- winter_input_dt[l_period == start_year]
-test <- 'MM'
-cycles <- 8
+#cycles <- 9
+
+init <- winter_input_dt[year == baseline_strategy$start_year]
+test <- 'Mammogram'
 
 
-output <- run_model(strategy = baseline_strategy, init= init, cycles = 8, inflow = TRUE)
 
-x <- mcmc_runner(n_accepted = 100, parameters)
+x <- mcmc_runner(strategy = baseline_strategy, n_accepted = 100)
+
+output <- run_model(strategy = baseline_strategy, init = init, cycles = 10, inflow = TRUE)
 
 
+
+
+winter_h5$close_all()
+winter_h5 <- H5File$new("Winter.h5", mode = "w")
+
+
+winter_input_dt[l_period == 2008]
 
 do_scenario <- function (list_of_tests, list_of_treatments) {
 

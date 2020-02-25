@@ -42,14 +42,14 @@ create_objects <- function(state_names) {
 
     }
 
-    define_strategy <- function(..., states, transition_matrix, dsa = NULL, mcmc = NULL) {
+    define_strategy <- function(..., states, transition_matrix, parameters, cycles, start_year, dsa = NULL, mcmc = NULL) {
         # TODO - find a way to pass the state_names vector and create the state objects
         # using create_states and define_state.
         # Have a list of named states per state_names
 
         strategy_properties <- lazyeval::lazy_dots(...)
 
-        structure(list(transition = transition_matrix, states = states, properties = strategy_properties,
+        structure(list(states = states, transition = transition_matrix, parameters = parameters, cycles = cycles, start_year = start_year, properties = strategy_properties,
               state_number = length(states), dsa = dsa, mcmc = mcmc),
               class = c("uneval_model", class(dsa), mcmc))
 
@@ -63,13 +63,13 @@ create_objects <- function(state_names) {
 
     define_initialisation <- function(strategy, start_year) {
 
+        # Not used at the moment
         switch(lazy_eval(strategy$properties$my_name),
                "S2" = winter_input_dt[YARP == start_year][, cycle := 0],
                "S3" = winter_input_dt[YARP < start_year][, cycle := 0]
     )
     }
-
-
+    
     define_dsa <- function(..., sample = 1) {
         # input should be of the form
         # param, lower limit, upper limit
@@ -366,6 +366,42 @@ define_dsa <- function(..., sample = 1) {
 }
 
 
+
+#define_calibration <- function()
+
+
+
+
+#winter_results <- winter_h5[['baseline']]
+#winter_output<- winter_results[['Mammogram']][['output']]
+#winter_index <- index_ds
+
+#winter_index[1,1,]
+
+#for (each in 1:9) {
+
+
+
+
+
+
+
+
+    #}
+
+#y <- data.table(winter_index[9, 1,])
+
+#x <- data.table(winter_output[9, 2,])
+
+
+#y[, c('scr.detected', 'cln.detected') := .(x$scr.detected, x$cln.detected)]
+#y[, (test) := NULL]
+
+#y[l_period == 2015, .(sum(scr.detected), sum(cln.detected)), by = .(l_period, age)]
+
+#y[l_period == 2009, .(sum(scr.detected+cln.detected)), by = .(l_period, age)]
+
+#ind4_cancer
 
 
 

@@ -22,7 +22,6 @@ get_state_counts <- function(index_ds, output_ds, year, strategy, markov_cycle, 
 
     }
 
-    POS <- lazy_eval(parameters[['POS']])
 
     #flow_cost <- lazy_eval(unevaluated_flow_cost)
     #state_cost <- lazy_eval(unevaluated_state_cost)

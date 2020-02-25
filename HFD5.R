@@ -1,6 +1,7 @@
 
-# tow create a HDF5 file
+# to create a HDF5 file
 winter_h5 <- H5File$new("Winter.h5", mode = "a")
+
 
 # give all the constants and types
 h5const$overview
@@ -8,6 +9,7 @@ h5types$overview
 
 # close file
 winter_h5$close_all()
+
 
 # to delete a dataset
 scenario_grp$link_delete("index2")
@@ -221,3 +223,14 @@ index_ds[1,1,]
 output_ds[1, 1,]
 
 class(NA)
+
+? dnorm
+
+
+
+winter_h5 <- H5File$new("Winter.h5", mode = "r")
+
+
+index_ds <- winter_h5[['baseline']][['index']]
+
+index_ds[2,1,]

@@ -1,6 +1,5 @@
+
 library(deSolve) # You first need to install this package if not already done
-
-
 
 ## Build an SIR model
 sir <- function(time, state, parameters) {
@@ -126,7 +125,7 @@ my_log_lh_func <- function(params) {
 
     # run the SIR model with the input parameters
     sir_results = run_a_simulation((params))
-    
+
     # Our likelihood is obtained by multiplying Gaussian elements centered on the model estimate for each datapoint.
     # We assume that the standard deviation is 0.05. This means that 95% of the Gaussian dentisty sits within an 
     # interval of width 0.1 (2*sd).
@@ -142,6 +141,10 @@ my_log_lh_func <- function(params) {
 
     return(overall_log_lh)
 }
+
+
+
+
 
 my_log_priors_func <- function(params) {
     # params is a list of parameters and associated values

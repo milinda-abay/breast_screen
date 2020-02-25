@@ -1,23 +1,26 @@
 # This is the MCMC runner for winter
 
-mcmc_runner <- function(n_accepted = 100, parameters) {
+mcmc_runner <- function(strategy, n_accepted = 100) {
 
     init_params <- list()
 
-    for (each in names(parameters)) {
+    for (each in names(strategy$parameters)) {
 
-        parameters[[each]]$env <- environment() # move evaluation of parameters to this environment
-        assign(each, lazy_eval(parameters[[each]])) # generate a pair lists for each parameter
+        strategy$parameters[[each]]$env <- environment() # move evaluation of parameters to this environment
+        assign(each, lazy_eval(strategy$parameters[[each]])) # generate a pair lists for each parameter
         init_params[[each]] <- eval(as.symbol(each)) # put the parameter value into a list
 
     }
-       
-    M = metropolis_hastings(log_lh_func = my_log_lh_func, log_priors_func = my_log_priors_func, proposal_func = my_proposal_func, init_params = init_params, n_accepted = n_accepted)
-    init_params
+
+    M <- metropolis_hastings(strategy = strategy, log_lh_func = my_log_lh_func, log_priors_func = my_log_priors_func, proposal_func = my_proposal_func, init_params = init_params, n_accepted = n_accepted)
 
 }
 
-metropolis_hastings <- function(log_lh_func,
+
+
+
+metropolis_hastings <- function(strategy,
+                                log_lh_func,
                                 log_priors_func,
                                 proposal_func,
                                 init_params,
@@ -25,16 +28,58 @@ metropolis_hastings <- function(log_lh_func,
                                 max_iterations = 1e4) {
 
 
+    # log_lh_func: a function returning the log-likelihood value. This is log( P(data | theta) )
+    # priors_func: a function returning the joint prior log-likelihood of the parameters. This is  log( P(theta) )
+    # proposal_func (or jumping function): a function returning a new parameter set, starting from another parameter set. P(theta' | theta)
+    # init_params: a list containing the parameters. e.g list(beta=0.5, gamma=2.6)
+    # n_accepted: number of accepted runs
+    # max_iterations: maximum number of iterations allowed
+
+    # preliminary check: max_iterations has to be >= n_accepted
+    stopifnot(max_iterations >= n_accepted)
+
+
+    # prepare storage for the results. columns will be named "log_lh", "accepted", "param1", "param2", ...
+    results = data.frame(log_lh = double(), accepted = integer())
+    for (param_name in names(init_params)) {
+        results[[param_name]] = double()
+    }
+
+    # initialise counters
+    count_iterations <- 0
+    count_accepted <- 0
+
+    # calculate the likelihoods of the initial parameter set
+    current_params <- init_params # current_params is the last accepted set of paramaters 
+    current_log_lh <- log_lh_func(strategy,init_params)
+    current_log_prior <- log_priors_func(init_params)
+
+    while (count_accepted < n_accepted) {
+
+        if (count_iterations >= max_iterations) {
+            print("The maximum number of iterations has been reached. The simulation has been aborted.")
+            break
+        }
+
+        # Generate a new candidate parameter set
+        proposed_params = proposal_func(current_params)
+
+        # Evaluate the likelihood of the new parameter set
+        proposed_log_lh = log_lh_func(proposed_params)
+        proposed_log_prior = log_priors_func(proposed_params)
+
+        # Acceptance or rejection?
+        accepted = 0
+        log_proba_of_acceptance = proposed_log_prior + proposed_log_lh - (current_log_prior + current_log_lh) # we could have stored (current_log_prior + current_log_lh) in a variable
+        proba_of_acceptance = exp(log_proba_of_acceptance) # transform to actual proba
 
 
 
 
-
-
+    }
 
 }
 
-?UseMethod
 
 my_proposal_func <- function(params, parameters) {
     # params is a list of parameters and associated values
@@ -60,22 +105,34 @@ my_proposal_func <- function(params, parameters) {
 
 
 
-my_log_lh_func <- function(params) {
+my_log_lh_func <- function(strategy, params) {
     # params is a list of parameters and associated values.
     # return the likelihood value associated with the parameter set.
+    # this is p(D|theta)
 
+    browser()
     # run winter model with the input parameters
-    winter_results <- run_model(strategy, params)
+    winter_results <- run_model(strategy, params, cycles = strategy$cycles)
+    winter_output <- winter_results[[1]][['output']]
+    winter_index <- winter_results[[2]][['index']]
 
     # Our likelihood is obtained by multiplying Gaussian elements centered on the model estimate for each datapoint.
     # We assume that the standard deviation is 0.05. This means that 95% of the Gaussian density sits within an 
     # interval of width 0.1 (2*sd).
     sd = 0.05
     overall_log_lh = 0
-    for (i in 1:nrow(my_data)) {
+    for (i in 1:nrow(ind7_cancer)) {
         # for each date of the dataset
-        model_output = sir_results$I[sir_results$time == my_data$date[i]]
-        single_log_lh = dnorm(x = my_data$in_bed[i], mean = model_output, sd = sd, log = TRUE)
+
+        winter_calibration_data <- find_calibration_data(winter_index, winter_output)
+
+        #model_output = sir_results$I[sir_results$time == my_data$date[i]]
+        #single_log_lh = dnorm(x = my_data$in_bed[i], mean = model_output, sd = sd, log = TRUE)
+
+        winter_output[, 1,1]
+        winter_index[6,2,1:10]
+
+
         overall_log_lh = overall_log_lh + single_log_lh
     }
 
@@ -84,7 +141,19 @@ my_log_lh_func <- function(params) {
 
 
 
-
-
-
-
+my_log_priors_func <- function(params) {
+    # params is a list of parameters and associated values
+    # this funciton returns the joint prior distribution (actually log version)
+    joint_log_prior = 0
+    for (param_name in names(params)) {
+        if (param_name == "beta") {
+            # flat prior
+            y = dunif(x = params[[param_name]], min = 0, max = 10, log = TRUE)
+        } else if (param_name == "gamma") {
+            # beta distribution on interval [0,1]
+            y = dbeta(x = params[[param_name]], shape1 = 2, shape2 = 2, log = TRUE)
+        }
+        joint_log_prior = joint_log_prior + y
+    }
+    return(joint_log_prior)
+}

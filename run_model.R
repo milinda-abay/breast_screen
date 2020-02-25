@@ -22,22 +22,18 @@ run_model.default <- function(...,
 
     
     uneval_strategy_list <- list(...)
-    strategy <- uneval_strategy_list[[1]]
+    strategy <- uneval_strategy_list[[1]] # assuming there is only one strategy!
 
     eval_strategy <- strategy
 
     year <- start_year # Initialise year with start_year
     markov_cycle <- 0 # Tracks the current cycle
-
-
     
     # A conditional flag used for inflows.
     my_name <- lazy_eval(strategy$properties$my_name)
 
-    
-
     # fills index_ds and output_ds with initial values
-    group <- initialise_hfd5(strategy.grp, strategy = strategy)
+    group <- initialise_hfd5(strategy = strategy)
 
     # Create names for datasets
     # TODO - move index_ds to strategy level group and pre-calculate it.
@@ -79,7 +75,8 @@ run_model.default <- function(...,
         if (inflow) {
 
             # TODO -  Need a check to ensure pop_inflow has data
-            pop_inflow <- winter_input_dt[l_period == year,]
+            y <- year
+            pop_inflow <- winter_input_dt[year == y,]
         }
         else {
             pop_inflow <- NULL # not convinced this is needed
@@ -88,6 +85,7 @@ run_model.default <- function(...,
         
         if (inflow) {
 
+            browser()
             # index test
             start <- nrow(index_ds[markov_cycle+1,1,]) + 1
             end <- start + nrow(pop_inflow) - 1
@@ -139,7 +137,7 @@ run_model.dsa <- function(...,
         markov_cycle <- 0 # Tracks the current cycle
 
         # fills index_ds and output_ds with initial values
-        group <- initialise_hfd5(strategy.grp, strategy_p1, strategy_p2, my_name, a_run, strategy = strategy)
+        group <- initialise_hfd5(strategy_p1, strategy_p2, my_name, a_run, strategy = strategy)
 
         # Create names for datasets
         # TODO - move index_ds to strategy level group and pre-calculate it.
@@ -225,17 +223,14 @@ run_model.mcmc <- function(...,
 
     eval_strategy <- strategy
 
-    year <- start_year # Initialise year with start_year
+    year <- strategy$start_year # Initialise year with start_year
     markov_cycle <- 0 # Tracks the current cycle
-
 
     # A conditional flag used for inflows.
     my_name <- lazy_eval(strategy$properties$my_name)
 
-
-
     # fills index_ds and output_ds with initial values
-    group <- initialise_hfd5(strategy.grp, strategy = strategy)
+    group <- initialise_hfd5(strategy = strategy)
 
     # Create names for datasets
     # TODO - move index_ds to strategy level group and pre-calculate it.
@@ -247,11 +242,13 @@ run_model.mcmc <- function(...,
     while (markov_cycle < cycles) {
 
         #current_rows <- which(index_ds[]$cycle == markov_cycle)
-        current_rows <- nrow(index_ds[markov_cycle + 1, 1,])
+        current_rows <- nrow(index_ds[markov_cycle , 1,])
 
         writeLines(sprintf("\nCommencing Markov cycle %i", markov_cycle))
         writeLines(sprintf("Current number of populations in the working matrix is %i", current_rows))
-        print(setDT(index_ds[markov_cycle + 1, 1,])[1:10, .N, by = .(age)])
+        print(setDT(index_ds[markov_cycle, 1,])[1:10, .N, by = .(age)])
+
+        
 
         results <- get_state_counts(index_ds, output_ds, year, strategy, markov_cycle, dsa)
 
@@ -275,16 +272,24 @@ run_model.mcmc <- function(...,
         }
 
         if (inflow) {
-
+            
             # TODO -  Need a check to ensure pop_inflow has data
-            pop_inflow <- winter_input_dt[l_period == year,]
+            y <- year
+            pop_inflow <- winter_input_dt[year == y,]
+
+            if (nrow(pop_inflow) == 0) {
+
+                pop_inflow <- NULL
+
+            }
+
         }
-        else {
-            pop_inflow <- NULL # not convinced this is needed
-        }
+        
 
 
-        if (inflow) {
+        if (!is.null(pop_inflow)) {
+
+            # browser()
 
             # index test
             start <- nrow(index_ds[markov_cycle + 1, 1,]) + 1
@@ -300,7 +305,10 @@ run_model.mcmc <- function(...,
 
     }
 
-
+    group
 
 
 }
+
+
+

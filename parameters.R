@@ -15,7 +15,7 @@ get_I <- function(cur_I = NULL) {
     new_value
 }
 
-get_BC <- function(cur_BC = NULL) {
+get_CB <- function(cur_BC = NULL) {
 
     if (is.null(cur_BC)) {
         cur_BC <- 0.05
@@ -31,7 +31,7 @@ get_BC <- function(cur_BC = NULL) {
 }
 
 
-get_RC <- function(cur_RC = NULL, BC) {
+get_CR <- function(cur_RC = NULL, BC) {
 
     if (is.null(cur_RC)) {
         cur_RC <- 0.10
@@ -202,3 +202,27 @@ get_PPC <- function(cur_PPC = NULL) {
     new_value
 }
 
+
+
+find_calibration_data <- function(winter_index, winter_output) {
+
+    dt_calibration <- data.table()
+
+    #todo - fix 1:11
+    for (each_year in 1:11) {
+
+        browser()
+
+        x <- data.table(winter_index[each_year, 1,])
+        y <- data.table(winter_output[each_year, 2,][8:9])
+
+        x <- cbind(x,y)
+
+        dt_calibration <- rbind(dt_calibration,x[, .(sum(scr.detected), sum(cln.detected)), by = .(state, year, age)])
+
+    }
+
+    browser()
+    dt_calibration
+
+}

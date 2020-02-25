@@ -2,7 +2,7 @@
 
 clean_up_indicator_1 <- function(DT) {
 
-    DT[`AGE GROUP (YEARS)` == '85+', `AGE GROUP (YEARS)` := '85–100'] # all 85+ year old women considered 85-100
+    DT[`AGE GROUP (YEARS)` == '85+', `AGE GROUP (YEARS)` := '85–99'] # all 85+ year old women considered 85-99
     DT[, c('l_age', 'u_age') := tstrsplit(`AGE GROUP (YEARS)`, '–', fixed = TRUE, type.convert = TRUE)]
 
     DT[Period %like% '-', Period := gsub('-', '–', Period)]
@@ -16,28 +16,36 @@ clean_up_indicator_1 <- function(DT) {
 
     DT[, calculated_mean := calculated_mean / (u_age - l_age + 1)]
 
+
     DT[, list(age = seq(from = l_age, to = u_age)), by = .(NUM_WOMEN, STATE, l_period, calculated_mean)]
 
 }
 
 clean_up_indicator_2345 <- function(DT) {
 
-    # all ages 70+  considered 70-85
-    # all ages 75+ considered 75-85
-
-
-    DT[`AGE GROUP (YEARS)` == '70+', `AGE GROUP (YEARS)` := '70–85']
-    DT[`AGE GROUP (YEARS)` == '75+', `AGE GROUP (YEARS)` := '75–85']
+    # all ages 70+  considered 70-84
+    # all ages 75+ considered 75-84
+    DT[, `AGE GROUP (YEARS)` := gsub('â€“', '–', `AGE GROUP (YEARS)`)]
+    DT[`AGE GROUP (YEARS)` == '70+', `AGE GROUP (YEARS)` := '70–84']
+    DT[`AGE GROUP (YEARS)` == '75+', `AGE GROUP (YEARS)` := '75–84']
     DT[, c('l_age', 'u_age') := tstrsplit(`AGE GROUP (YEARS)`, '–', fixed = TRUE, type.convert = TRUE)]
     DT[, c('AGE GROUP (YEARS)') := NULL]
 
+    DT[, c('calculated_mean') := NUM_WOMEN / (u_age - l_age + 1)]
+
+
+    DT <- DT[, list(age = seq(from = l_age, to = u_age)), by = .(seq_len(nrow(DT)), NUM_WOMEN, Period, Screen, STATE, calculated_mean)]
+    DT[, seq_len := NULL]
+    DT
 }
+
+
 
 clean_up_indicator_6 <- function(DT) {
 
-    # all 70+ year old women considered 70-85
+    # all 70+ year old women considered 70-84
     DT[Detected %like% '–', Detected := gsub('–', '-', Detected)]
-    DT[`AGE GROUP (YEARS)` == '70+', `AGE GROUP (YEARS)` := '70–85']
+    DT[`AGE GROUP (YEARS)` == '70+', `AGE GROUP (YEARS)` := '70–84']
     DT[, c('l_age', 'u_age') := tstrsplit(`AGE GROUP (YEARS)`, '–', fixed = TRUE, type.convert = TRUE)]
     DT[, c('l_period', 'u_period') := tstrsplit(Period, '-', fixed = TRUE, type.convert = TRUE)]
 
@@ -50,15 +58,19 @@ clean_up_indicator_6 <- function(DT) {
 
 }
 
+
+
 clean_up_indicator_7 <- function(DT) {
 
     # <20 year olds considered 0 - 20
 
-    DT[`AGE GROUP (YEARS)` == '<20', `AGE GROUP (YEARS)` := '0–20']
-    DT[`AGE GROUP (YEARS)` == '<30', `AGE GROUP (YEARS)` := '0–30']
+    DT[, `AGE GROUP (YEARS)` := gsub('â€“', '–', `AGE GROUP (YEARS)`)]
+    DT[, Period := gsub('â€“', '–', Period)]
+    DT[`AGE GROUP (YEARS)` == '<20', `AGE GROUP (YEARS)` := '0–19']
+    DT[`AGE GROUP (YEARS)` == '<30', `AGE GROUP (YEARS)` := '0–29']
     DT[`AGE GROUP (YEARS)` == '30-39', `AGE GROUP (YEARS)` := '30–39']
     
-    DT[`AGE GROUP (YEARS)` == '85+', `AGE GROUP (YEARS)` := '85–85']
+    DT[`AGE GROUP (YEARS)` == '85+', `AGE GROUP (YEARS)` := '85–99'] # all 85+ year old women considered 85-99
 
     if (any(DT$Period %like% '–')) {
 
@@ -70,6 +82,11 @@ clean_up_indicator_7 <- function(DT) {
     DT[, c('l_age', 'u_age') := tstrsplit(`AGE GROUP (YEARS)`, '–', fixed = TRUE, type.convert = TRUE)]
     DT[, c('AGE GROUP (YEARS)') := NULL]
 
+    DT[, c('calculated_mean') := NUM_WOMEN / (u_age - l_age + 1)]
+    DT <- DT[, list(age = seq(from = l_age, to = u_age)), by = .(seq_len(nrow(DT)), NUM_WOMEN, Period, calculated_mean)]
+    DT[, seq_len := NULL]
+    DT
+    
 }
 
 
@@ -83,8 +100,8 @@ ind4_cancer <- fread(paste(data_path, 'Cancer_4.csv', sep = ""))
 ind5_dcis <- fread(paste(data_path, 'DCIS_5.csv', sep = ''))
 ind6_interval <- fread(paste(data_path, 'Interval_6.csv', sep = ''))
 ind7_cancer <- fread(paste(data_path, 'Cancer_7.csv', sep = ""))
-ind7_cancer_state <- fread(paste(data_path, 'Cancer_state_7.csv', sep = ""))
-ind7_dcis <- fread(paste(data_path, 'DCIS_7.csv', sep = ''))
+#ind7_cancer_state <- fread(paste(data_path, 'Cancer_state_7.csv', sep = ""))
+#ind7_dcis <- fread(paste(data_path, 'DCIS_7.csv', sep = ''))
 
 
 ind1_participation <- clean_up_indicator_1(ind1_participation)
@@ -95,13 +112,32 @@ ind4_cancer <- clean_up_indicator_2345(ind4_cancer)
 ind5_dcis <- clean_up_indicator_2345(ind5_dcis)
 ind6_interval <- clean_up_indicator_6(ind6_interval)
 ind7_cancer <- clean_up_indicator_7(ind7_cancer)
-ind7_cancer_state <- clean_up_indicator_7(ind7_cancer_state)
-ind7_dcis <- clean_up_indicator_7(ind7_dcis)
+#ind7_cancer_state <- clean_up_indicator_7(ind7_cancer_state)
+#ind7_dcis <- clean_up_indicator_7(ind7_dcis)
+
+
+setnames(ind1_population, c('NUM_WOMEN', 'STATE', 'l_period', 'calculated_mean'),
+         c('original_population', 'state', 'year', 'calculated_population'))
+
+setnames(ind1_participation, c('NUM_WOMEN', 'STATE', 'l_period', 'calculated_mean'),
+         c('original_participation', 'state', 'year', 'calc_part'))
+
+setnames(ind2_rescreen, c('NUM_WOMEN', 'STATE', 'Period', 'calculated_mean', 'Screen'),
+         c('original_screened', 'state', 'year', 'calculated_screened', 'screen'))
+
+
+setnames(ind3_recall, c('NUM_WOMEN', 'STATE', 'Period', 'calculated_mean', 'Screen'),
+         c('original_recall', 'state', 'year', 'calculated_recalled', 'screen'))
+
+setnames(ind4_cancer, c('NUM_WOMEN', 'STATE', 'Period', 'calculated_mean', 'Screen'),
+         c('original_cancer', 'state', 'year', 'calculated_cancer', 'screen'))
+
+setnames(ind5_dcis, c('NUM_WOMEN', 'STATE', 'Period', 'calculated_mean', 'Screen'),
+         c('original_dcis', 'state', 'year', 'calculated_dcis', 'screen'))
+
+#setnames(ind6_interval, c('NUM_WOMEN', 'STATE', 'Period', 'calculated_mean', 'Screen'),
+         #c('original_dcis', 'state', 'year', 'calculated_dcis', 'screen'))
 
 
 
-
-
-
-
-
+ind1_population[ind1_participation,, on=.(state,year,age)]

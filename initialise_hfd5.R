@@ -7,8 +7,9 @@ initialise_hfd5 <- function(..., strategy) {
 
 
 # Initialise HDF5
-initialise_hfd5.NULL <- function(strategy.grp, strategy) {
+initialise_hfd5.default <- function(strategy) {
 
+    cycles <- strategy$cycles
 
     # Create the scenario groups in HFD5
     group_name <- lazy_eval(strategy$properties$my_name)
@@ -19,12 +20,13 @@ initialise_hfd5.NULL <- function(strategy.grp, strategy) {
 
     }
 
-    # Create a group link to the index dataset
+    # Check to see if the index exist or not. Then make appropriate link
     if (!(strategy$properties$my_name$expr %in% names(winter_h5))) {
         index_grp <- winter_h5$create_group(paste(strategy$properties$my_name$expr))
 
     } else {
 
+        
         index_grp <- winter_h5[[strategy$properties$my_name$expr]]
     }
 
@@ -38,6 +40,7 @@ initialise_hfd5.NULL <- function(strategy.grp, strategy) {
         scenario_grp <- winter_h5[[group_name]]
 
     }
+
 
     # Creating a 3D array for the index data set
     # TODO - change all hard coded values to refer winter_input_dt for attributes
@@ -59,7 +62,8 @@ initialise_hfd5.NULL <- function(strategy.grp, strategy) {
                                    h5types$H5T_IEEE_F32LE, h5types$H5T_NATIVE_INT))
 
     index_space <- H5S$new(dim = c(cycles + 1, 1, nrow(init)), maxdims = c(cycles + 1, 1, Inf))
-
+    #index_space <- H5S$new(dim = c(cycles, 1, nrow(init)), maxdims = c(cycles, 1, Inf))
+    
     # Above should be implemented like this.
     compound_output <- H5T_COMPOUND$new(names(strategy$states),
                                    dtypes = rep(list(eval(Quote(h5types$H5T_IEEE_F32LE))), strategy$state_number))
@@ -67,7 +71,7 @@ initialise_hfd5.NULL <- function(strategy.grp, strategy) {
     #index_space <- H5S$new(dim = c(cycles + 1, 1, nrow(init)), maxdims = c(cycles + 1, 1, Inf))
 
     output_space <- H5S$new(dim = c(cycles + 1, 5, nrow(init)), maxdims = c(cycles + 1, 5, Inf))
-       
+    #output_space <- H5S$new(dim = c(cycles, 5, nrow(init)), maxdims = c(cycles, 5, Inf))
     
     if ('index' %in% names(winter_h5[[strategy$properties$my_name$expr]])) {
 
@@ -90,14 +94,16 @@ initialise_hfd5.NULL <- function(strategy.grp, strategy) {
 
     index_ds <- index_grp[['index']]
 
+
+
     x <- copy(init[, ..index_column_names])
 
-
-    index_ds[1,1, ] <- x
+    
+    index_ds[0,1, ] <- x
 
     output_ds <- scenario_grp[['output']]
 
-    output_ds[1, 1,] <- init[, ..state_names]
+    output_ds[0, 1,] <- init[, ..state_names]
 
     list(scenario_grp,index_grp)
 
@@ -107,6 +113,8 @@ initialise_hfd5.NULL <- function(strategy.grp, strategy) {
 
 # Initialise HDF5
 initialise_hfd5.dsa <- function(strategy.grp, strategy_p1, strategy_p2, my_name, a_run, strategy) {
+
+    cycles <- strategy$cycles
 
     dsa <- paste('dsa', a_run, sep = '_')
     group_name <- paste(strategy$properties$my_name$expr, paste(strategy_p1, strategy_p2, sep = "_"), sep = '/')
