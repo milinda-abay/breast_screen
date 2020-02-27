@@ -69,9 +69,10 @@ clean_up_indicator_7 <- function(DT) {
     DT[`AGE GROUP (YEARS)` == '<20', `AGE GROUP (YEARS)` := '0–19']
     DT[`AGE GROUP (YEARS)` == '<30', `AGE GROUP (YEARS)` := '0–29']
     DT[`AGE GROUP (YEARS)` == '30-39', `AGE GROUP (YEARS)` := '30–39']
-    
+
     DT[`AGE GROUP (YEARS)` == '85+', `AGE GROUP (YEARS)` := '85–99'] # all 85+ year old women considered 85-99
 
+    
     if (any(DT$Period %like% '–')) {
 
         DT[, c('l_period', 'u_period') := tstrsplit(Period, '–', fixed = TRUE, type.convert = TRUE)]
@@ -85,6 +86,9 @@ clean_up_indicator_7 <- function(DT) {
     DT[, c('calculated_mean') := NUM_WOMEN / (u_age - l_age + 1)]
     DT <- DT[, list(age = seq(from = l_age, to = u_age)), by = .(seq_len(nrow(DT)), NUM_WOMEN, Period, calculated_mean)]
     DT[, seq_len := NULL]
+
+    DT[, year:= as.integer(Period)]
+    DT[, Period := NULL]
     DT
     
 }

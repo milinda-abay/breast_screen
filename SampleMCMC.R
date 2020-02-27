@@ -134,7 +134,6 @@ my_log_lh_func <- function(params) {
     for (i in 1:nrow(my_data)) {
         # for each date of the dataset
         model_output = sir_results$I[sir_results$time == my_data$date[i]]
-        browser()
         single_log_lh = dnorm(x = my_data$in_bed[i], mean = model_output, sd = sd, log = TRUE)
         overall_log_lh = overall_log_lh + single_log_lh
     }
@@ -149,6 +148,7 @@ my_log_lh_func <- function(params) {
 my_log_priors_func <- function(params) {
     # params is a list of parameters and associated values
     # this funciton returns the joint prior distribution (actually log version)
+    browser()
     joint_log_prior = 0
     for (param_name in names(params)) {
         if (param_name == "beta") {
@@ -330,4 +330,4 @@ master_plotting <- function(mcmc_outputs) {
 
 
 M = master_mcmc_runner(100)
-master_plotting(M)
+#master_plotting(M)

@@ -10,6 +10,7 @@ state_names <- c('NoBC', 'mild.b', 'mild.r', 'mild.t', 'prog.b', 'prog.r', 'prog
 # create a HDF5
 winter_h5 <- H5File$new("Winter.h5", mode = "w")
 
+
 # source files
 source("parameters.R")
 source("object creator.R")
@@ -107,55 +108,51 @@ test <- 'Mammogram'
 
 x <- mcmc_runner(strategy = baseline_strategy, n_accepted = 100)
 
-output <- run_model(strategy = baseline_strategy, init = init, cycles = 10, inflow = TRUE)
-
-
-
-
 winter_h5$close_all()
 winter_h5 <- H5File$new("Winter.h5", mode = "w")
 
+output <- run_model(strategy = baseline_strategy, init = init, cycles = 10, inflow = TRUE)
 
-winter_input_dt[l_period == 2008]
+#winter_input_dt[l_period == 2008]
 
-do_scenario <- function (list_of_tests, list_of_treatments) {
+#do_scenario <- function (list_of_tests, list_of_treatments) {
 
-    do_test <- function(test) {
+    #do_test <- function(test) {
 
-        do_treatment <- function(treatment) {
+        #do_treatment <- function(treatment) {
 
-            # copies the scenario environment in order to evaluate test & treatment
-            s2_strategy$properties$test$env <- environment()
-            s2_strategy$properties$treatment$env <- environment()
+            ## copies the scenario environment in order to evaluate test & treatment
+            #s2_strategy$properties$test$env <- environment()
+            #s2_strategy$properties$treatment$env <- environment()
 
-            run_model(strategy = baseline_strategy, init = init, cycles = cycles)
+            #run_model(strategy = baseline_strategy, init = init, cycles = cycles)
 
-        }
+        #}
 
-        lapply(list_of_treatments, do_treatment)
+        #lapply(list_of_treatments, do_treatment)
 
-    }
+    #}
 
-    lapply(list_of_tests, do_test)
+    #lapply(list_of_tests, do_test)
 
-}
+#}
 
-baseline_arglist <- object_creator$create_argument_list(list_values)
-baseline_arglist$load_list("baseline")
-baseline_matrix <- do.call(object_creator$define_transition, baseline_arglist$list_values())
-baseline_state_list <- object_creator$create_states(state_names)
-
-
-baseline_strategy <- object_creator$define_strategy(test = "",
-                                                    treatment = "",
-                                                    my_name = "BASELINE",
-                                                    states = baseline_state_list,
-                                                    transition_matrix = baseline_matrix,
-                                                    dsa = dsa)
+#baseline_arglist <- object_creator$create_argument_list(list_values)
+#baseline_arglist$load_list("baseline")
+#baseline_matrix <- do.call(object_creator$define_transition, baseline_arglist$list_values())
+#baseline_state_list <- object_creator$create_states(state_names)
 
 
+#baseline_strategy <- object_creator$define_strategy(test = "",
+                                                    #treatment = "",
+                                                    #my_name = "BASELINE",
+                                                    #states = baseline_state_list,
+                                                    #transition_matrix = baseline_matrix,
+                                                    #dsa = dsa)
 
 
-baseline_arglist$edit_list()
 
-winter_h5[1]
+
+#baseline_arglist$edit_list()
+
+#winter_h5[1]

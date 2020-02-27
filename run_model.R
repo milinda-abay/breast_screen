@@ -216,7 +216,8 @@ run_model.mcmc <- function(...,
                      effect = NULL,
                      inflow = TRUE,
                      dsa = FALSE,
-                     mcmc = TRUE) {
+                     mcmc = TRUE,
+                     mcmc_run_id = NULL) {
 
     uneval_strategy_list <- list(...)
     strategy <- uneval_strategy_list[[1]]
@@ -230,7 +231,7 @@ run_model.mcmc <- function(...,
     my_name <- lazy_eval(strategy$properties$my_name)
 
     # fills index_ds and output_ds with initial values
-    group <- initialise_hfd5(strategy = strategy)
+    group <- initialise_hfd5(mcmc_run_id, strategy = strategy)
 
     # Create names for datasets
     # TODO - move index_ds to strategy level group and pre-calculate it.

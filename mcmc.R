@@ -51,7 +51,7 @@ metropolis_hastings <- function(strategy,
 
     # calculate the likelihoods of the initial parameter set
     current_params <- init_params # current_params is the last accepted set of paramaters 
-    current_log_lh <- log_lh_func(strategy,init_params)
+    current_log_lh <- log_lh_func(strategy, init_params, count_iterations)
     current_log_prior <- log_priors_func(init_params)
 
     while (count_accepted < n_accepted) {
@@ -61,12 +61,13 @@ metropolis_hastings <- function(strategy,
             break
         }
 
+        browser()
         # Generate a new candidate parameter set
-        proposed_params = proposal_func(current_params)
+        proposed_params <- proposal_func(current_params)
 
         # Evaluate the likelihood of the new parameter set
-        proposed_log_lh = log_lh_func(proposed_params)
-        proposed_log_prior = log_priors_func(proposed_params)
+        proposed_log_lh <- log_lh_func(strategy, proposed_params, count_iterations+1)
+        proposed_log_prior <- log_priors_func(proposed_params)
 
         # Acceptance or rejection?
         accepted = 0
@@ -75,16 +76,17 @@ metropolis_hastings <- function(strategy,
 
 
 
-
+        count_iterations = count_iterations + 1
     }
 
 }
 
 
-my_proposal_func <- function(params, parameters) {
+my_proposal_func <- function(params) {
     # params is a list of parameters and associated values
     # this function returns another list of parameters
 
+    
     names(params) <- paste('cur_', names(params), sep = '')
 
     for (each in names(params)) {
@@ -99,61 +101,68 @@ my_proposal_func <- function(params, parameters) {
         assign(each, lazy_eval(parameters[[each]])) # generate a pair lists for each parameter
         new_params[[each]] <- eval(as.symbol(each)) # put the parameter value into a list
     }
-
+    
     new_params
 }
 
 
 
-my_log_lh_func <- function(strategy, params) {
+my_log_lh_func <- function(strategy, params, count_iterations) {
     # params is a list of parameters and associated values.
     # return the likelihood value associated with the parameter set.
     # this is p(D|theta)
 
-    browser()
+    
     # run winter model with the input parameters
-    winter_results <- run_model(strategy, params, cycles = strategy$cycles)
+    winter_results <- run_model(strategy, params, cycles = strategy$cycles, mcmc_run_id = count_iterations)
     winter_output <- winter_results[[1]][['output']]
     winter_index <- winter_results[[2]][['index']]
 
     # Our likelihood is obtained by multiplying Gaussian elements centered on the model estimate for each datapoint.
     # We assume that the standard deviation is 0.05. This means that 95% of the Gaussian density sits within an 
     # interval of width 0.1 (2*sd).
-    sd = 0.05
-    overall_log_lh = 0
-    for (i in 1:nrow(ind7_cancer)) {
-        # for each date of the dataset
+    sd <- 0.05
+    overall_log_lh <- 0
+    
+    # for each date of the dataset
 
-        winter_calibration_data <- find_calibration_data(winter_index, winter_output)
+    winter_calibration_data <- find_calibration_data(strategy,winter_index, winter_output)
+        
+    #model_output = sir_results$I[sir_results$time == my_data$date[i]]
+    empirical_data <- find_empirical_data(strategy,data_variables = c('cln.detected', 'scr.detected'))
+    
 
-        #model_output = sir_results$I[sir_results$time == my_data$date[i]]
-        #single_log_lh = dnorm(x = my_data$in_bed[i], mean = model_output, sd = sd, log = TRUE)
+    log_lh_dt <- merge(winter_calibration_data, empirical_data, by = c('year'), all = TRUE)
+    #single_log_lh = dnorm(x = my_data$in_bed[i], mean = model_output, sd = sd, log = TRUE)
 
-        winter_output[, 1,1]
-        winter_index[6,2,1:10]
+    log_lh_dt[, scr.detected.llh := dnorm(x = log_lh_dt[,scr.detected.y], mean = log_lh_dt[,scr.detected.x], sd = sd, log = TRUE)]
+    log_lh_dt[, cln.detected.llh := dnorm(x = log_lh_dt[, cln.detected.y], mean = log_lh_dt[, cln.detected.x], sd = sd, log = TRUE)]
 
 
-        overall_log_lh = overall_log_lh + single_log_lh
-    }
+    overall_log_lh <- log_lh_dt[, sum(cln.detected.llh,scr.detected.llh, na.rm = TRUE)]
 
-    return(overall_log_lh)
+    overall_log_lh
+        
 }
-
 
 
 my_log_priors_func <- function(params) {
     # params is a list of parameters and associated values
-    # this funciton returns the joint prior distribution (actually log version)
+    # this function returns the joint prior distribution (actually log version)
+
+    
     joint_log_prior = 0
     for (param_name in names(params)) {
-        if (param_name == "beta") {
-            # flat prior
-            y = dunif(x = params[[param_name]], min = 0, max = 10, log = TRUE)
-        } else if (param_name == "gamma") {
+        if (param_name %in% c("CB","CR","CT"))  {
             # beta distribution on interval [0,1]
             y = dbeta(x = params[[param_name]], shape1 = 2, shape2 = 2, log = TRUE)
+            
+        } else {
+            # flat prior, following Romain's example here min=0 and max=10. Verify this logic!
+            y = dunif(x = params[[param_name]], min = 0, max = 10, log = TRUE)
         }
         joint_log_prior = joint_log_prior + y
     }
     return(joint_log_prior)
 }
+
