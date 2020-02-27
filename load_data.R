@@ -94,7 +94,7 @@ clean_up_indicator_7 <- function(DT) {
 }
 
 
-data_path <- "M:/Documents/@Projects/BCS/data/PBI Indicators/"
+data_path <- "./Data/"
 
 ind1_participation <- fread(paste(data_path, 'Participation_1.csv', sep = ''))
 ind1_population <- fread(paste(data_path, 'Population_1.csv', sep = ''))
@@ -144,4 +144,4 @@ setnames(ind5_dcis, c('NUM_WOMEN', 'STATE', 'Period', 'calculated_mean', 'Screen
 
 
 
-ind1_population[ind1_participation,, on=.(state,year,age)]
+# ind1_population[ind1_participation,, on=.(state,year,age)]
