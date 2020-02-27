@@ -7,7 +7,6 @@ run_model <- function(strategy, ...) {
 }
 
 
-
 # The main model runtime loop 
 run_model.default <- function(...,
                      parameters = NULL,
