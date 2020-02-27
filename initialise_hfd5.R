@@ -114,19 +114,7 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
 
     cycles <- strategy$cycles
 
-     
-    # Create the scenario groups in HFD5
-    group_name <- lazy_eval(strategy$properties$my_name)
-
-    for (each in strategy$properties[names(strategy$properties) != 'my_name']) {
-
-        group_name <- paste(group_name, lazy_eval(each), sep = '/')
-
-    }
     
-    # because this is MCMC
-    group_name <- paste(group_name, 'MCMC', mcmc_run_id, sep = '/')
-
     # Check to see if the index exist or not. Then make appropriate link
     if (!(strategy$properties$my_name$expr %in% names(winter_h5))) {
         index_grp <- winter_h5$create_group(paste(strategy$properties$my_name$expr))
@@ -136,37 +124,28 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
         index_grp <- winter_h5[[strategy$properties$my_name$expr]]
     }
 
-    browser()
+    # Create the scenario groups in HFD5
+    group_name <- lazy_eval(strategy$properties$my_name)
 
-    group_name <- "baseline/Mammogram/MCMC/0"
-    group_elements <- strsplit(group_name, '/')[[1]]
+    for (each in strategy$properties[names(strategy$properties) != 'my_name']) {
 
-    build_list <- function(item, res) {
-        if (length(res) > 1) {
-            res <- build_list(tail(item, -1), res[[item]])
-        } else {
-            res = c(res, list(item))
+        group_name <- paste(group_name, lazy_eval(each), sep = '/')
+        if (!(group_name %in% list.groups(winter_h5))) {
+            winter_h5$create_group(group_name)
         }
-        res
+
     }
-
-    res <- list()
-
-    for (each in group_elements) {
-        res <- build_list(each, res)
+    
+    # because this is MCMC
+    group_name <- paste(group_name, 'MCMC', sep = '/')
+    if (!(group_name %in% list.groups(winter_h5))) {
+        parameter_grp <- winter_h5$create_group(group_name)
     }
+    
 
-    browser()
-
-    head(res, -1)
-    #while (!group_name %in% list.groups(winter_h5)) {
-
-        #for (each in group )
-
-
-    #}
-
-
+    # Create the final group for MCMC run id
+    group_name <- paste(group_name, mcmc_run_id, sep = '/')
+    
     # Check to see if the dataset exist or not. Then make appropriate link
     if (!(group_name %in% list.groups(winter_h5))) {
 
@@ -210,6 +189,16 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
     output_space <- H5S$new(dim = c(cycles + 1, 5, nrow(init)), maxdims = c(cycles + 1, 5, Inf))
     #output_space <- H5S$new(dim = c(cycles, 5, nrow(init)), maxdims = c(cycles, 5, Inf))
 
+    # create a table to hold parameter values
+    #cols <- length(parameters) + 2 # llh and accepted
+
+    #col_names <- c(names(parameters), 'log likelihood', 'accepted')
+    
+
+    #parameters_type <- h5types$H5T
+    #H5T_FLOAT$new()
+
+
     if ('index' %in% names(winter_h5[[strategy$properties$my_name$expr]])) {
 
         index_grp$link_delete('index')
@@ -227,6 +216,18 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
         scenario_grp$create_dataset(name = 'output', space = output_space, dtype = compound_output)
 
     }
+
+    # browser()
+    
+
+    # parameter_space <- H5S$new( dim = c(1,cols), maxdims = c(Inf, cols))
+
+
+    #if (!('parameter' %in% list.datasets(parameter_grp))) {
+
+        #parameter_grp$create_dataset(name = 'parameter', space = output_space, dtype = compound_output)
+
+    #}
 
 
     index_ds <- index_grp[['index']]
@@ -317,3 +318,33 @@ initialise_hfd5.dsa <- function(strategy.grp, strategy_p1, strategy_p2, my_name,
     list(scenario_grp, index_grp)
 
 }
+
+#browser()
+
+#group_name <- "baseline/Mammogram/MCMC/0"
+#group_elements <- strsplit(group_name, '/')[[1]]
+
+#build_list <- function(item, res) {
+#if (length(res) > 1) {
+#res <- build_list(tail(item, -1), res[[item]])
+#} else {
+#res = c(res, list(item))
+#}
+#res
+#}
+
+#res <- list()
+
+#for (each in group_elements) {
+#res <- build_list(each, res)
+#}
+
+#browser()
+
+#head(res, -1)
+#while (!group_name %in% list.groups(winter_h5)) {
+
+#for (each in group )
+
+
+#}

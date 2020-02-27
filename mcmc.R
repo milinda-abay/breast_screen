@@ -61,7 +61,7 @@ metropolis_hastings <- function(strategy,
             break
         }
 
-        browser()
+        
         # Generate a new candidate parameter set
         proposed_params <- proposal_func(current_params)
 
@@ -74,7 +74,28 @@ metropolis_hastings <- function(strategy,
         log_proba_of_acceptance = proposed_log_prior + proposed_log_lh - (current_log_prior + current_log_lh) # we could have stored (current_log_prior + current_log_lh) in a variable
         proba_of_acceptance = exp(log_proba_of_acceptance) # transform to actual proba
 
+        
+        if (proba_of_acceptance >= 1) {
+            # the proposed parameter set is "better" than the current one
+            accepted = 1
+        } else {
+            accepted = rbinom(n = 1, size = 1, prob = proba_of_acceptance)
+        }
 
+        # storage
+        new_row = list(log_lh = proposed_log_lh + proposed_log_prior, accepted = accepted)
+        for (param_name in names(proposed_params)) {
+            new_row[[param_name]] = proposed_params[[param_name]]
+        }
+        results = rbind(results, new_row)
+
+        # If the run is accepted, we update the relevant variables
+        if (accepted == 1) {
+            current_params = proposed_params
+            current_log_prior = proposed_log_prior
+            current_log_lh = proposed_log_lh
+            count_accepted = count_accepted + 1
+        }
 
         count_iterations = count_iterations + 1
     }
@@ -125,7 +146,6 @@ my_log_lh_func <- function(strategy, params, count_iterations) {
     overall_log_lh <- 0
     
     # for each date of the dataset
-
     winter_calibration_data <- find_calibration_data(strategy,winter_index, winter_output)
         
     #model_output = sir_results$I[sir_results$time == my_data$date[i]]
@@ -163,6 +183,7 @@ my_log_priors_func <- function(params) {
         }
         joint_log_prior = joint_log_prior + y
     }
-    return(joint_log_prior)
+
+    joint_log_prior
 }
 

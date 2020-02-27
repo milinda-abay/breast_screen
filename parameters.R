@@ -31,15 +31,17 @@ get_CB <- function(cur_BC = NULL) {
 }
 
 
-get_CR <- function(cur_RC = NULL, BC) {
+get_CR <- function(cur_CR = NULL, BC) {
 
-    if (is.null(cur_RC)) {
-        cur_RC <- 0.10
+    if (is.null(cur_CR)) {
+
+        cur_CR <- 0.10
     }
 
     new_value <- -1
     while (new_value < 0) {
-        new_value <- cur_CR + rbeta(n = 1, 2, 2, ncp = 0) -.5
+
+        new_value <- cur_CR + rbeta(n = 1, 2, 2, ncp = 0) - .5
     }
 
     new_value * (1 - BC)

@@ -86,6 +86,8 @@ metropolis_hastings <- function(log_lh_func, log_priors_func, proposal_func, ini
         accepted = 0
         log_proba_of_acceptance = proposed_log_prior + proposed_log_lh - (current_log_prior + current_log_lh) # we could have stored (current_log_prior + current_log_lh) in a variable
         proba_of_acceptance = exp(log_proba_of_acceptance) # transform to actual proba
+
+        
         if (proba_of_acceptance >= 1) {
             # the proposed parameter set is "better" than the current one
             accepted = 1

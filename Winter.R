@@ -8,6 +8,9 @@ state_names <- c('NoBC', 'mild.b', 'mild.r', 'mild.t', 'prog.b', 'prog.r', 'prog
                  'scr.detected', 'cln.detected')
 
 # create a HDF5
+if ('winter_h5' %in% ls() ) {
+    winter_h5$close_all()
+}
 winter_h5 <- H5File$new("Winter.h5", mode = "w")
 
 
@@ -33,22 +36,21 @@ baseline_arglist$load_list('baseline_tmatrix') # load an existing transition mat
 baseline_matrix <- do.call(object_creator$define_transition, baseline_arglist$list_values())
 
 # Create a list of model states
-state_list <- object_creator$create_states(state_names, a=x, b=y, c=z)
+# state_list <- object_creator$create_states(state_names, a=x, b=y, c=z)
 
 # Initialise 
-cur_I <- NULL
-cur_CB <- NULL
-cur_CR <- NULL
-cur_EB <- NULL
-cur_ER <- NULL
-cur_ET <- NULL
-cur_KB <- NULL
-cur_KR <- NULL
-cur_KT <- NULL
-cur_SN <- NULL
-cur_SP <- NULL
-cur_POS <- NULL
-cur_PPC <- NULL
+#cur_I <- NULL
+#cur_CB <- NULL
+#cur_CR <- NULL
+#cur_EB <- NULL
+#cur_ER <- NULL
+#cur_ET <- NULL
+#cur_KB <- NULL
+#cur_KR <- NULL
+#cur_KT <- NULL
+#cur_SN <- NULL
+#cur_SP <- NULL
+
 
 # Place holder values
 flow_cost <- rep(1,9)
@@ -102,16 +104,16 @@ start_year <- 2008
 #cycles <- 9
 
 init <- winter_input_dt[year == baseline_strategy$start_year]
-test <- 'Mammogram'
+test <- 'Mammogram' # just a placeholder property used to verify hdf5r group creation
 
 
+x <- mcmc_runner(strategy = baseline_strategy, n_accepted = 20)
 
-x <- mcmc_runner(strategy = baseline_strategy, n_accepted = 100)
 
 winter_h5$close_all()
-winter_h5 <- H5File$new("Winter.h5", mode = "w")
+#winter_h5 <- H5File$new("Winter.h5", mode = "w")
 
-output <- run_model(strategy = baseline_strategy, init = init, cycles = 10, inflow = TRUE)
+# output <- run_model(strategy = baseline_strategy, init = init, cycles = 10, inflow = TRUE)
 
 #winter_input_dt[l_period == 2008]
 
