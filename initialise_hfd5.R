@@ -140,6 +140,9 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
     group_name <- paste(group_name, 'MCMC', sep = '/')
     if (!(group_name %in% list.groups(winter_h5))) {
         parameter_grp <- winter_h5$create_group(group_name)
+    } else {
+
+        parameter_grp <- winter_h5[[group_name]]
     }
     
 
@@ -189,15 +192,7 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
     output_space <- H5S$new(dim = c(cycles + 1, 5, nrow(init)), maxdims = c(cycles + 1, 5, Inf))
     #output_space <- H5S$new(dim = c(cycles, 5, nrow(init)), maxdims = c(cycles, 5, Inf))
 
-    # create a table to hold parameter values
-    #cols <- length(parameters) + 2 # llh and accepted
-
-    #col_names <- c(names(parameters), 'log likelihood', 'accepted')
-    
-
-    #parameters_type <- h5types$H5T
-    #H5T_FLOAT$new()
-
+   
 
     if ('index' %in% names(winter_h5[[strategy$properties$my_name$expr]])) {
 
@@ -217,22 +212,37 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
 
     }
 
-    # browser()
+       
     
 
-    # parameter_space <- H5S$new( dim = c(1,cols), maxdims = c(Inf, cols))
+    # create a table to hold parameter values
+    cols <- length(parameters) + 2 # llh and accepted
+    col_names <- c(names(parameters), 'log likelihood', 'accepted')
 
+    
+    param_dtype <- rep(list(eval(Quote(h5types$H5T_IEEE_F32LE))), cols)
+    param_space <- H5S$new( dim = c(1), maxdims = c(Inf))
+    param_compound <- H5T_COMPOUND$new(col_names, param_dtype)
+    
 
-    #if (!('parameter' %in% list.datasets(parameter_grp))) {
+    if (!('parameters' %in% list.datasets(parameter_grp))) {
 
-        #parameter_grp$create_dataset(name = 'parameter', space = output_space, dtype = compound_output)
+        param_ds <- parameter_grp$create_dataset(name = 'parameters', space = param_space,
+                                             dtype = param_compound)
 
-    #}
+    } else {
+
+        param_ds <- parameter_grp[['parameters']]
+
+    }
+
+    
+
 
 
     index_ds <- index_grp[['index']]
 
-
+    index_ds[1,1,]
 
     x <- copy(init[, ..index_column_names])
 
@@ -243,7 +253,7 @@ initialise_hfd5.mcmc <- function(mcmc_run_id, strategy) {
 
     output_ds[0, 1,] <- init[, ..state_names]
 
-    list(scenario_grp, index_grp)
+    list(scenario_grp, index_grp, parameter_grp)
 
 }
 
@@ -348,3 +358,4 @@ initialise_hfd5.dsa <- function(strategy.grp, strategy_p1, strategy_p2, my_name,
 
 
 #}
+

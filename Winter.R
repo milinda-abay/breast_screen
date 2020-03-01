@@ -36,20 +36,20 @@ baseline_arglist$load_list('baseline_tmatrix') # load an existing transition mat
 baseline_matrix <- do.call(object_creator$define_transition, baseline_arglist$list_values())
 
 # Create a list of model states
-# state_list <- object_creator$create_states(state_names, a=x, b=y, c=z)
+state_list <- object_creator$create_states(state_names, a=x, b=y, c=z)
 
 # Initialise 
-#cur_I <- NULL
-#cur_CB <- NULL
-#cur_CR <- NULL
-#cur_EB <- NULL
-#cur_ER <- NULL
-#cur_ET <- NULL
-#cur_KB <- NULL
-#cur_KR <- NULL
-#cur_KT <- NULL
-#cur_SN <- NULL
-#cur_SP <- NULL
+cur_I <- NULL
+cur_CB <- NULL
+cur_CR <- NULL
+cur_EB <- NULL
+cur_ER <- NULL
+cur_ET <- NULL
+cur_KB <- NULL
+cur_KR <- NULL
+cur_KT <- NULL
+cur_SN <- NULL
+cur_SP <- NULL
 
 
 # Place holder values

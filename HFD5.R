@@ -233,4 +233,27 @@ winter_h5 <- H5File$new("Winter.h5", mode = "r")
 
 index_ds <- winter_h5[['baseline']][['index']]
 
-index_ds[2,1,]
+index_ds[2, 1,]
+
+
+
+library(hdf5r)
+test_filename <- tempfile(fileext = ".h5")
+file.h5 <- H5File$new(test_filename, mode = "w")
+file.h5
+mtcars.grp <- file.h5$create_group("mtcars")
+flights.grp <- file.h5$create_group("flights")
+
+library(datasets)
+library(nycflights13)
+library(reshape2)
+mtcars.grp[["mtcars"]] <- datasets::mtcars
+flights.grp[["weather"]] <- nycflights13::weather
+flights.grp[["flights"]] <- nycflights13::flights
+
+names(file.h5)
+x_ds <- mtcars.grp[["mtcars"]]
+
+x_ds[][32,] <- rep(999, 11)
+
+x_ds[33] <- data.table((t(data.table(rep(999, 11)))))

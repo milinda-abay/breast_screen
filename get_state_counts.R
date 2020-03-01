@@ -49,12 +49,24 @@ get_state_counts <- function(index_ds, output_ds, year, strategy, markov_cycle, 
     if (markov_cycle == 0) {
 
         pn <- names(parameters)
+        param_ds <- winter_h5[['baseline/Mammogram/MCMC/parameters']]
         h5attr(output_ds, 'dsa') <- dsa
-        lapply(pn, function(pn) {
-            
-            h5attr(output_ds, pn) <- eval(as.symbol(pn), this_env)
+
+        eval_param <- lapply(pn, function(pn) {
+
+            p <- eval(as.symbol(pn), this_env)
+            h5attr(output_ds, pn) <- p
+            p
+
         })
 
+        names(eval_param) <- pn
+
+        p <- setDT(data.frame(eval_param))
+        p[,c('log likelihood','accepted') := 0]
+
+        param_ds[a_run] <- p
+        
     }
 
 

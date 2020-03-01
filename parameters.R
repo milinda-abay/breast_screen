@@ -15,23 +15,23 @@ get_I <- function(cur_I = NULL) {
     new_value
 }
 
-get_CB <- function(cur_BC = NULL) {
+get_CB <- function(cur_CB = NULL) {
 
-    if (is.null(cur_BC)) {
-        cur_BC <- 0.05
+    if (is.null(cur_CB)) {
+        cur_CB <- 0.05
     }
 
     new_value <- -1
     while (new_value < 0) {
         # we use a beta distribution to manage the probabilities
-        new_value <- cur_BC + rbeta(n = 1, 2, 2, ncp = 0) -.5
+        new_value <- cur_CB + rbeta(n = 1, 2, 2, ncp = 0) -.5
     }
 
     new_value
 }
 
 
-get_CR <- function(cur_CR = NULL, BC) {
+get_CR <- function(cur_CR = NULL, CB) {
 
     if (is.null(cur_CR)) {
 
@@ -44,7 +44,7 @@ get_CR <- function(cur_CR = NULL, BC) {
         new_value <- cur_CR + rbeta(n = 1, 2, 2, ncp = 0) - .5
     }
 
-    new_value * (1 - BC)
+    new_value * (1 - CB)
 
 }
 
@@ -263,3 +263,7 @@ find_empirical_data <- function(strategy = NULL, data_variables = NULL) {
     x
     
 }
+
+
+
+?missing

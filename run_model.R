@@ -238,7 +238,8 @@ run_model.mcmc <- function(...,
     # then all variations(scenarios) of the strategy can reference it.
     index_ds <- group[[2]][["index"]]
     output_ds <- group[[1]][['output']]
-
+    
+    
 
     while (markov_cycle < cycles) {
 
@@ -251,7 +252,7 @@ run_model.mcmc <- function(...,
 
         
 
-        results <- get_state_counts(index_ds, output_ds, year, strategy, markov_cycle, dsa)
+        results <- get_state_counts(index_ds, output_ds, year, strategy, markov_cycle, dsa, mcmc_run_id)
 
         # Update counters
         markov_cycle <- markov_cycle + 1
